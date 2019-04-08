@@ -630,18 +630,23 @@ describe('User Api', function() {
         })
     })
   })
-  describe('change passwords', function() {
+/*  describe('change passwords', function() {
     it('regular user can change own password', async function(){
-      await User.create({
+      const user = await User.create({
 	firstName: 'first',
 	lastName: 'last',
 	email: '123@example.com',
 	roles: [],
 	provider: 'local',
 	password: '12345678'
+      })
+
+      const session = await createUserSession(user)
+      const request = supertest.agent(session.app)
+      
+      return await request.post('/api/user/password')
+        .send({currentPassword: '12345678', newPassword: 'qwertyuiop', validatePassword: 'qwertyuiop'}) 
+	.expect(200)
     })
-    const session = createGuestSession()
-    
-    
-  })
+  })*/
 })
