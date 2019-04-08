@@ -630,6 +630,25 @@ describe('User Api', function() {
         })
     })
   })
+  describe('Forgot password', function() {
+    it('returns 500 without proper configuration', async function() {
+      await User.create({
+        firstName: 'first',
+        lastName: 'last',
+        email: '123@example.com',
+        roles: [],
+        provider: 'local',
+        password: '12345678'
+      })    
+      const session = createGuestSession()
+      const request = supertest.agent(session)
+
+      return  request.post('/api/auth/forgot')
+        .send({email: '123@example.com'})
+        .expect(500)
+        
+    })
+  })
 /*  describe('change passwords', function() {
     it('regular user can change own password', async function(){
       const user = await User.create({
