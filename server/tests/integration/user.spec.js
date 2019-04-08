@@ -630,4 +630,18 @@ describe('User Api', function() {
         })
     })
   })
+  describe('change passwords', function() {
+    it('regular user can change own password', async function(){
+      await User.create({
+	firstName: 'first',
+	lastName: 'last',
+	email: '123@example.com',
+	roles: [],
+	provider: 'local',
+	password: '12345678'
+    })
+    const session = createGuestSession()
+    
+    
+  })
 })
