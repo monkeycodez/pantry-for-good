@@ -7,6 +7,8 @@ import { createGuestSession, createUserSession, createTestUser } from '../helper
 
 import {searchUserAndSetNotification} from '../../lib/notification-sender'
 
+//import config from '../../config'
+
 describe('User Api', function() {
   before(async function() {
     await initDb()
@@ -631,6 +633,24 @@ describe('User Api', function() {
     })
   })
   describe('Forgot password', function() {
+    let emailMock
+    let password = require('../../controllers/users/password')
+
+    beforeEach(function (){
+      var config = { sendgrid: { API_KEY:'TEST'}}
+      password.__Rewire__('config', config)
+
+      emailMock = {
+        sendPasswordReset: sinon.spy()
+      }
+      password.__Rewire__('mailer', emailMock)
+    })
+
+    afterEach(function (){
+      password.__ResetDependency__('config')
+      password.__ResetDependency__('mailer')
+    })
+    /*
     it('returns 500 without proper configuration', async function() {
       await User.create({
         firstName: 'first',
@@ -647,6 +667,50 @@ describe('User Api', function() {
         .send({email: '123@example.com'})
         .expect(500)
         
+    })*/
+    it('requres an email', async function() {
+      const session = createGuestSession()
+      const request = supertest.agent(session)
+
+      return await request.post('/api/auth/forgot')
+        .send({})
+        .expect(400)
+        .expect( res => {
+          expect(res.body.message).to.equal('Email is required')
+        })
+    })
+    it('sends no email with a non-registered email', async function() {
+      const session = createGuestSession()
+      const request = supertest.agent(session)
+
+      await request.post('/api/auth/forgot')
+        .send({email: "nonexistant@example.com"})
+        .expect(200)
+        .expect( res => {
+          expect(res.body.message).to.equal('Password reset email sent')
+        })
+      expect(emailMock.sendPasswordReset.notCalled)
+    })
+    it('sends email on registered email', async function() {
+      await User.create({
+        firstName: 'first',
+        lastName: 'last',
+        email: '123@example.com',
+        roles: [],
+        provider: 'local',
+        password: '12345678'
+      }) 
+
+      const session = createGuestSession()
+      const request = supertest.agent(session)
+
+      await request.post('/api/auth/forgot')
+        .send({email: "123@example.com"})
+        .expect(200)
+        .expect( res => {
+          expect(res.body.message).to.equal('Password reset email sent')
+        })
+      expect(emailMock.sendPasswordReset.called)
     })
   })
 /*  describe('change passwords', function() {
