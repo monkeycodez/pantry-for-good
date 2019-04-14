@@ -712,6 +712,29 @@ describe('User Api', function() {
         })
       expect(emailMock.sendPasswordReset.called)
     })
+
+    it('sends correct reset token', async function() {
+      const user = await User.create({
+        firstName: 'first',
+        lastName: 'last',
+        email: '123@example.com',
+        roles: [],
+        provider: 'local',
+        password: '12345678'
+      }) 
+
+      const session = createGuestSession()
+      const request = supertest.agent(session)
+
+      await request.post('/api/auth/forgot')
+        .send({email: "123@example.com"})
+        .expect(200)
+        .expect( res => {
+          expect(res.body.message).to.equal('Password reset email sent')
+        })
+      expect(user.resetPasswordToken).to.be.a('string')
+      expect(emailMock.sendPasswordReset.calledWith(user.resetPasswordToken))
+    })
   })
 /*  describe('change passwords', function() {
     it('regular user can change own password', async function(){
