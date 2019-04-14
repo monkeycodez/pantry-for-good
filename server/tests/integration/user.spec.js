@@ -632,6 +632,7 @@ describe('User Api', function() {
         })
     })
   })
+
   describe('Forgot password', function() {
     let emailMock
     let password = require('../../controllers/users/password')
@@ -650,24 +651,7 @@ describe('User Api', function() {
       password.__ResetDependency__('config')
       password.__ResetDependency__('mailer')
     })
-    /*
-    it('returns 500 without proper configuration', async function() {
-      await User.create({
-        firstName: 'first',
-        lastName: 'last',
-        email: '123@example.com',
-        roles: [],
-        provider: 'local',
-        password: '12345678'
-      })    
-      const session = createGuestSession()
-      const request = supertest.agent(session)
 
-      return  request.post('/api/auth/forgot')
-        .send({email: '123@example.com'})
-        .expect(500)
-        
-    })*/
     it('requres an email', async function() {
       const session = createGuestSession()
       const request = supertest.agent(session)
@@ -679,6 +663,7 @@ describe('User Api', function() {
           expect(res.body.message).to.equal('Email is required')
         })
     })
+
     it('sends no email with a non-registered email', async function() {
       const session = createGuestSession()
       const request = supertest.agent(session)
@@ -691,6 +676,7 @@ describe('User Api', function() {
         })
       expect(emailMock.sendPasswordReset.notCalled)
     })
+
     it('sends email on registered email', async function() {
       await User.create({
         firstName: 'first',
@@ -732,27 +718,13 @@ describe('User Api', function() {
         .expect( res => {
           expect(res.body.message).to.equal('Password reset email sent')
         })
-      expect(user.resetPasswordToken).to.be.a('string')
-      expect(emailMock.sendPasswordReset.calledWith(user.resetPasswordToken))
-    })
-  })
-/*  describe('change passwords', function() {
-    it('regular user can change own password', async function(){
-      const user = await User.create({
-	firstName: 'first',
-	lastName: 'last',
-	email: '123@example.com',
-	roles: [],
-	provider: 'local',
-	password: '12345678'
-      })
 
-      const session = await createUserSession(user)
-      const request = supertest.agent(session.app)
-      
-      return await request.post('/api/user/password')
-        .send({currentPassword: '12345678', newPassword: 'qwertyuiop', validatePassword: 'qwertyuiop'}) 
-	.expect(200)
+      const updatedUser = await User.findById(user._id)
+
+      expect(updatedUser.resetPasswordToken).to.be.a('string')
+      expect(emailMock.sendPasswordReset.calledWith(updatedUser.resetPasswordToken))
     })
-  })*/
+
+  })
+
 })
