@@ -539,6 +539,41 @@ describe('User Api', function() {
       expect(updatedUser).to.have.property('lastName', requestBody.lastName)
     })
 
+    it('users cannot change email to an email that is taken', async function(){
+      const user = await User.create({
+        firstName: 'first',
+        lastName: 'last',
+        email: '123@example.com',
+        roles: [],
+        provider: 'local',
+        password: '12345678'
+      })
+
+      const user2 = await User.create({
+        firstName: 'firstname',
+        lastName: 'lastname',
+        email: '1234@example.com',
+        roles: [],
+        provider: 'local',
+        password: '12345678'
+      })
+
+      const userSession = await createUserSession(user)
+      const userReq = supertest.agent(userSession.app)
+
+      const requestBody = {
+        _id: user._id,
+        created: user.created,
+        displayName: user.displayName,
+        email: '1234@example.com',
+      }
+      await userReq.put('/api/users/me').send(requestBody).expect(400)
+
+      const updatedUser = await User.findById(user._id).lean()
+      expect(updatedUser).to.not.have.property('email', user2.email)
+
+    })
+
     it('requires first and last name', async function(){
       const user = await User.create({
         firstName: 'first',
@@ -646,7 +681,7 @@ describe('User Api', function() {
     //     provider: 'local',
     //     password: '12345678'
     //   })
-    // 
+    //
     //   const userSession = await createUserSession(user)
     //   const userReq = supertest.agent(userSession.app)
     //
