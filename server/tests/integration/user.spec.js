@@ -503,6 +503,30 @@ describe('User Api', function() {
       expect(updatedUser).to.have.property('firstName', user1.firstName)
       expect(updatedUser).to.have.property('lastName', user1.lastName)
     })
+
+    it('admin cannot demote themselves to regular user', async function(){
+      const user = await User.create({
+        firstName: 'first',
+        lastName: 'last',
+        email: '123@example.com',
+        roles: [ADMIN_ROLE],
+        provider: 'local',
+        password: '12345678'
+      })
+
+      const userSession = await createUserSession(user)
+      const userReq = supertest.agent(userSession.app)
+
+      await userReq.put(`/api/admin/users/${user._id}`)
+        .send({ isAdmin: false })
+        .expect(400)
+
+      const updatedUser = await User.findById(user._id).lean()
+      expect(updatedUser).to.have.property('roles')
+      expect(updatedUser.roles).to.include(ADMIN_ROLE)
+    })
+
+
   })
 
   describe('updating profile', function() {
@@ -671,88 +695,6 @@ describe('User Api', function() {
       expect(updatedUser).to.have.property('roles')
       expect(updatedUser.roles).to.not.include(ADMIN_ROLE)
     })
-    it('admin cannot update a user email to an email that is taken', async function(){
-      const user = await User.create({
-        firstName: 'first',
-        lastName: 'last',
-        email: '123@example.com',
-        password: '12345678',
-        provider: 'local'
-      })
-      const user2 = await User.create({
-        firstName: 'Frank',
-        lastName: 'Harper',
-        email: 'fharper@example.com',
-        password: '12345678',
-        provider: 'local'
-      })
-      const adminUser = createTestUser('admin', ADMIN_ROLE)
-      const adminSession = await createUserSession(adminUser)
-      const adminReq = supertest.agent(adminSession.app)
-
-      const requestBody = {
-        email: 'fharper@example.com',
-      }
-
-      await adminReq.put(`/api/admin/users/${user._id}`).send(requestBody).expect(400)
-      const updatedUser = await User.findById(user._id).lean()
-      expect(updatedUser).to.not.have.property('email', user2.email)
-    })
-    it('admin cannot update a user that did not enter a name', async function(){
-      const user = await User.create({
-        firstName: 'first',
-        lastName: 'last',
-        email: '123@example.com',
-        password: '12345678',
-        provider: 'local'
-      })
-      const adminUser = createTestUser('admin', ADMIN_ROLE)
-      const adminSession = await createUserSession(adminUser)
-      const adminReq = supertest.agent(adminSession.app)
-
-      const requestBody = {
-        _id: user._id,
-        created: user.created,
-        displayName: user.displayName,
-        email: 'newemail@example.com',
-        firstName: '',
-        lastName: '',
-        provider: user.provider,
-        roles: user.roles,
-        updated: user.updated
-      }
-      await adminReq.put(`/api/admin/users/${user._id}`).send(requestBody).expect(400)
-      const updatedUser = await User.findById(requestBody._id).lean()
-      expect(updatedUser).to.not.have.property('firstName', requestBody.firstName)
-      expect(updatedUser).to.not.have.property('lastName', requestBody.lastName)
-      expect(updatedUser).to.not.have.property('lastName', requestBody.email)
-    })
-
-
-
-    //not working right now
-    // it('admin cannot demote themselves to regular user', async function(){
-    //   const user = await User.create({
-    //     firstName: 'first',
-    //     lastName: 'last',
-    //     email: '123@example.com',
-    //     roles: [ADMIN_ROLE],
-    //     provider: 'local',
-    //     password: '12345678'
-    //   })
-    //
-    //   const userSession = await createUserSession(user)
-    //   const userReq = supertest.agent(userSession.app)
-    //
-    //   await userReq.put('/api/users/me')
-    //     .send({ isAdmin: false })
-    //     .expect(400)
-    //
-    //   const updatedUser = await User.findById(user._id).lean()
-    //   expect(updatedUser).to.have.property('roles')
-    //   expect(updatedUser.roles).to.include(ADMIN_ROLE)
-    // })
-
   })
 
   describe('users notifications', function() {
