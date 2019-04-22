@@ -503,6 +503,30 @@ describe('User Api', function() {
       expect(updatedUser).to.have.property('firstName', user1.firstName)
       expect(updatedUser).to.have.property('lastName', user1.lastName)
     })
+
+    it('admin cannot demote themselves to regular user', async function(){
+      const user = await User.create({
+        firstName: 'first',
+        lastName: 'last',
+        email: '123@example.com',
+        roles: [ADMIN_ROLE],
+        provider: 'local',
+        password: '12345678'
+      })
+    
+      const userSession = await createUserSession(user)
+      const userReq = supertest.agent(userSession.app)
+    
+      await userReq.put(`/api/admin/users/${user._id}`)
+        .send({ isAdmin: false })
+        .expect(400)
+    
+      const updatedUser = await User.findById(user._id).lean()
+      expect(updatedUser).to.have.property('roles')
+      expect(updatedUser.roles).to.include(ADMIN_ROLE)
+    })
+
+
   })
 
   describe('updating profile', function() {
@@ -671,28 +695,7 @@ describe('User Api', function() {
       expect(updatedUser).to.have.property('roles')
       expect(updatedUser.roles).to.not.include(ADMIN_ROLE)
     })
-    //not working right now
-    // it('admin cannot demote themselves to regular user', async function(){
-    //   const user = await User.create({
-    //     firstName: 'first',
-    //     lastName: 'last',
-    //     email: '123@example.com',
-    //     roles: [ADMIN_ROLE],
-    //     provider: 'local',
-    //     password: '12345678'
-    //   })
-    //
-    //   const userSession = await createUserSession(user)
-    //   const userReq = supertest.agent(userSession.app)
-    //
-    //   await userReq.put('/api/users/me')
-    //     .send({ isAdmin: false })
-    //     .expect(400)
-    //
-    //   const updatedUser = await User.findById(user._id).lean()
-    //   expect(updatedUser).to.have.property('roles')
-    //   expect(updatedUser.roles).to.include(ADMIN_ROLE)
-    // })
+
 
   })
 
