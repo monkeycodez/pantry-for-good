@@ -746,18 +746,6 @@ describe('User Api', function() {
       password.__ResetDependency__('mailer')
     })
 
-    it('requres an email', async function() {
-      const session = createGuestSession()
-      const request = supertest.agent(session)
-
-      return await request.post('/api/auth/forgot')
-        .send({})
-        .expect(400)
-        .expect( res => {
-          expect(res.body.message).to.equal('Email is required')
-        })
-    })
-
     it('sends no email with a non-registered email', async function() {
       const session = createGuestSession()
       const request = supertest.agent(session)
