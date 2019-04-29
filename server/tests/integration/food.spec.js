@@ -147,6 +147,35 @@ describe('Food Api', function() {
         })
         .expect(200)
     })
+    
+     it('adds food items to a category if they already exist', async function() {
+    const testAdmin = createTestUser('admin', ADMIN_ROLE)
+    const {app} = await createUserSession(testAdmin)
+    const request = supertest.agent(app)
+    
+    const testCategory = {category: 'test food'}
+    const testItem = {name: 'test item', quantity: 5}
+
+    const savedCategory = (await request.post('/api/foods')
+      .send(testCategory)).body
+
+    await request.post(`/api/foods/${savedCategory._id}/items`)
+      .send(testItem)
+      .expect(200)
+    const testItem2 = {name: 'test item', quantity: 4}
+    const request2 = supertest.agent(app)
+    return request2.post(`/api/foods/${savedCategory._id}/items`)
+      .send(testItem2)
+        .expect(res => {
+          expect(res.body).to.be.an('object')
+          expect(res.body).to.have.property('items')
+          expect(res.body.items).to.be.an('array')
+          expect(res.body.items).to.have.length(1)
+          const item = res.body.items.find(i => i.name === 'test item' && i.quantity === 9)
+          expect(item).to.not.be.undefined
+      })
+      .expect(200)
+  })
 
     it('updates food items', async function() {
       const testAdmin = createTestUser('admin', ADMIN_ROLE)
