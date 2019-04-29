@@ -125,6 +125,27 @@ describe('Food Api', function() {
         .expect(200)
     })
 
+    it('prevents deleting if category if food items are not marked as deleted', async function() {
+      const testAdmin = createTestUser('admin', ADMIN_ROLE)
+      const {app} = await createUserSession(testAdmin)
+      const request = supertest.agent(app)
+
+      const apple = await FoodItem.create({name: 'apple', quantity: 2, deleted: false})
+
+      const category = await Food.create({category: 'fruits', items: [apple]})
+
+      const savedCategory = (await request
+        .post(`/api/foods/${category._id}/items`)
+        .send(apple)
+      ).body
+
+      return request.delete(`/api/foods/${savedCategory._id}`)
+        .expect(400)
+        .expect( res => {
+          expect(res.body.message).to.equal('Food category must be empty before deleting')
+        })
+    })
+
     it('adds food items', async function() {
       const testAdmin = createTestUser('admin', ADMIN_ROLE)
       const {app} = await createUserSession(testAdmin)
@@ -292,6 +313,5 @@ describe('Food Api', function() {
           expect(item).to.not.be.undefined
         })
     })
-
   })
 })
